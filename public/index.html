@@ -139,98 +139,101 @@
 
     /* ── Sidebar ─────────────────────────────────────────────── */
     .sidebar {
-      width: 300px;
+      width: 360px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      background: #111318;
     }
 
     .pane {
-      padding: 14px 16px;
-      border-bottom: 1px solid #21262d;
+      padding: 16px 18px;
+      border-bottom: 1px solid #2d333b;
     }
 
     .pane h2 {
-      font-size: 10px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #484f58;
+      letter-spacing: 0.08em;
+      color: #768390;
       margin-bottom: 10px;
     }
 
     /* Next step */
     #suggestion {
-      font-size: 13px;
-      color: #8b949e;
-      line-height: 1.55;
+      font-size: 14px;
+      color: #cdd9e5;
+      line-height: 1.6;
       font-style: italic;
       min-height: 20px;
     }
-    #suggestion.empty { color: #30363d; font-style: normal; }
+    #suggestion.empty { color: #444c56; font-style: normal; }
 
     /* Notes */
-    .notes-list { display: flex; flex-direction: column; gap: 7px; }
+    .notes-list { display: flex; flex-direction: column; gap: 10px; }
 
     .note-card {
-      background: #161b22;
-      border: 1px solid #21262d;
+      background: #1c2128;
+      border: 1px solid #2d333b;
+      border-left: 3px solid #3fb950;
       border-radius: 6px;
-      padding: 8px 10px;
+      padding: 12px 14px;
     }
-    .note-key   { font-size: 11px; font-weight: 600; color: #3fb950; margin-bottom: 3px; }
-    .note-value { font-size: 12px; color: #8b949e; line-height: 1.4; }
+    .note-key   { font-size: 11px; font-weight: 700; color: #56d364; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .note-value { font-size: 14px; color: #cdd9e5; line-height: 1.6; }
 
-    #notes-empty { font-size: 12px; color: #30363d; }
+    #notes-empty { font-size: 14px; color: #444c56; }
 
     /* Principles */
     .principles {
       flex: 1;
       overflow-y: auto;
-      padding: 14px 16px;
+      padding: 16px 18px;
     }
 
     .principles h2 {
-      font-size: 10px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #484f58;
-      margin-bottom: 10px;
+      letter-spacing: 0.08em;
+      color: #768390;
+      margin-bottom: 12px;
     }
 
     .principle {
-      margin-bottom: 9px;
-      padding: 8px 10px;
-      border-left: 2px solid #21262d;
-      border-radius: 0 4px 4px 0;
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      border-left: 3px solid #2d333b;
+      border-radius: 0 5px 5px 0;
+      background: #1c2128;
       transition: border-color 0.2s, background 0.2s;
     }
 
     .principle.triggered {
       border-left-color: #3fb950;
-      background: #0d1f14;
+      background: #12261e;
     }
 
     .principle strong {
       display: block;
-      font-size: 11px;
-      color: #484f58;
-      margin-bottom: 2px;
+      font-size: 13px;
+      color: #768390;
+      margin-bottom: 3px;
       transition: color 0.2s;
     }
 
-    .principle.triggered strong { color: #3fb950; }
+    .principle.triggered strong { color: #56d364; }
 
     .principle span {
-      font-size: 11px;
-      color: #30363d;
-      line-height: 1.4;
+      font-size: 12px;
+      color: #545d68;
+      line-height: 1.5;
       transition: color 0.2s;
     }
 
-    .principle.triggered span { color: #484f58; }
+    .principle.triggered span { color: #adbac7; }
   </style>
 </head>
 <body>
@@ -258,6 +261,7 @@
 
     <div class="pane">
       <h2>Notes</h2>
+      <p style="font-size:12px;color:#768390;margin-bottom:8px;line-height:1.55;">The AI saves a note when it decides the conversation has produced a <em>key insight, decision, or fact worth keeping</em>. You don't ask — it judges.</p>
       <div class="notes-list" id="notes-list">
         <span id="notes-empty">Nothing saved yet.</span>
       </div>
@@ -277,8 +281,8 @@
       </div>
 
       <div class="principle" id="p-tool">
-        <strong>Lean tools</strong>
-        <span>save_note: 2 required fields, nothing else. Schema is the contract.</span>
+        <strong>Tool use (automatic)</strong>
+        <span>The system prompt instructs the AI to call save_note whenever it spots a key insight, decision, or fact. It decides — no user trigger needed.</span>
       </div>
 
       <div class="principle" id="p-compress">
@@ -434,7 +438,7 @@
           if (event.type === 'note_saved') {
             notes[event.key] = event.value;
             renderNotes();
-            chip(`note saved: ${event.key}`, 'note');
+            chip(`AI automatically saved a note → ${event.key}`, 'note');
             trigger('p-tool');
           }
 
