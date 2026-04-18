@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>minimus</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      background: #0d1117;
+      color: #c9d1d9;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      border-bottom: 1px solid #21262d;
+      flex-shrink: 0;
+    }
+
+    header h1 { font-size: 15px; font-weight: 600; color: #8b949e; letter-spacing: 0.02em; }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: #161b22;
+      color: #484f58;
+      border: 1px solid #21262d;
+    }
+
+    .badge.live { color: #3fb950; border-color: #238636; }
+
+    main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Chat panel ─────────────────────────────────────────── */
+    .chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #21262d;
+      min-width: 0;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .message { max-width: 640px; }
+    .message.user { align-self: flex-end; }
+    .message.assistant { align-self: flex-start; }
+
+    .message-label {
+      font-size: 11px;
+      color: #484f58;
+      margin-bottom: 4px;
+      padding: 0 2px;
+    }
+    .message.user .message-label { text-align: right; }
+
+    .message-body {
+      padding: 10px 14px;
+      border-radius: 8px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message.user .message-body      { background: #1f4688; color: #cae8ff; }
+    .message.assistant .message-body { background: #161b22; color: #c9d1d9; border: 1px solid #21262d; }
+
+    .event-chip {
+      align-self: center;
+      font-size: 11px;
+      padding: 3px 12px;
+      border-radius: 12px;
+      background: #161b22;
+      border: 1px solid #21262d;
+      color: #484f58;
+      flex-shrink: 0;
+    }
+    .event-chip.compressed { color: #d29922; border-color: #9e6a03; }
+    .event-chip.note       { color: #3fb950; border-color: #238636; }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      padding: 14px 20px;
+      border-top: 1px solid #21262d;
+      flex-shrink: 0;
+    }
+
+    textarea {
+      flex: 1;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      padding: 9px 12px;
+      font: inherit;
+      resize: none;
+      min-height: 42px;
+      max-height: 140px;
+      line-height: 1.5;
+    }
+    textarea:focus { outline: none; border-color: #58a6ff; }
+    textarea::placeholder { color: #484f58; }
+
+    button#send {
+      background: #238636;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0 16px;
+      font: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button#send:hover    { background: #2ea043; }
+    button#send:disabled { background: #21262d; color: #484f58; cursor: default; }
+
+    /* ── Sidebar ─────────────────────────────────────────────── */
+    .sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .pane {
+      padding: 14px 16px;
+      border-bottom: 1px solid #21262d;
+    }
+
+    .pane h2 {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #484f58;
+      margin-bottom: 10px;
+    }
+
+    /* Next step */
+    #suggestion {
+      font-size: 13px;
+      color: #8b949e;
+      line-height: 1.55;
+      font-style: italic;
+      min-height: 20px;
+    }
+    #suggestion.empty { color: #30363d; font-style: normal; }
+
+    /* Notes */
+    .notes-list { display: flex; flex-direction: column; gap: 7px; }
+
+    .note-card {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+    .note-key   { font-size: 11px; font-weight: 600; color: #3fb950; margin-bottom: 3px; }
+    .note-value { font-size: 12px; color: #8b949e; line-height: 1.4; }
+
+    #notes-empty { font-size: 12px; color: #30363d; }
+
+    /* Principles */
+    .principles {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+    }
+
+    .principles h2 {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #484f58;
+      margin-bottom: 10px;
+    }
+
+    .principle {
+      margin-bottom: 9px;
+      padding: 8px 10px;
+      border-left: 2px solid #21262d;
+      border-radius: 0 4px 4px 0;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .principle.triggered {
+      border-left-color: #3fb950;
+      background: #0d1f14;
+    }
+
+    .principle strong {
+      display: block;
+      font-size: 11px;
+      color: #484f58;
+      margin-bottom: 2px;
+      transition: color 0.2s;
+    }
+
+    .principle.triggered strong { color: #3fb950; }
+
+    .principle span {
+      font-size: 11px;
+      color: #30363d;
+      line-height: 1.4;
+      transition: color 0.2s;
+    }
+
+    .principle.triggered span { color: #484f58; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>minimus</h1>
+  <span class="badge" id="model-badge">sonnet-4-6</span>
+  <span class="badge" id="status-badge">ready</span>
+</header>
+
+<main>
+  <div class="chat">
+    <div class="messages" id="messages"></div>
+    <div class="input-row">
+      <textarea id="input" placeholder="Ask anything… (Enter to send, Shift+Enter for newline)" rows="1"></textarea>
+      <button id="send">Send</button>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="pane">
+      <h2>Next Step</h2>
+      <p id="suggestion" class="empty">—</p>
+    </div>
+
+    <div class="pane">
+      <h2>Notes</h2>
+      <div class="notes-list" id="notes-list">
+        <span id="notes-empty">Nothing saved yet.</span>
+      </div>
+    </div>
+
+    <div class="principles">
+      <h2>Principles in Play</h2>
+
+      <div class="principle" id="p-prompt">
+        <strong>It's the prompt</strong>
+        <span>Focused system prompt. No padding. One clear purpose.</span>
+      </div>
+
+      <div class="principle" id="p-cache">
+        <strong>Caching saves cost</strong>
+        <span>Static rules cached after request 1. Only state changes per turn.</span>
+      </div>
+
+      <div class="principle" id="p-tool">
+        <strong>Lean tools</strong>
+        <span>save_note: 2 required fields, nothing else. Schema is the contract.</span>
+      </div>
+
+      <div class="principle" id="p-compress">
+        <strong>Compress history</strong>
+        <span>At 10 messages, older turns are summarized by Haiku.</span>
+      </div>
+
+      <div class="principle" id="p-model">
+        <strong>Right model, right task</strong>
+        <span>Sonnet for reasoning. Haiku for compression and next-step hints.</span>
+      </div>
+
+      <div class="principle" id="p-plan">
+        <strong>Let the model plan</strong>
+        <span>After each response, Haiku suggests the most valuable next action.</span>
+      </div>
+
+      <div class="principle" id="p-limits">
+        <strong>Limits on everything</strong>
+        <span>Main: 1024 tokens. Suggestion: 80. Compression: 256.</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const inputEl      = document.getElementById('input');
+  const sendBtn      = document.getElementById('send');
+  const messagesEl   = document.getElementById('messages');
+  const suggestionEl = document.getElementById('suggestion');
+  const notesListEl  = document.getElementById('notes-list');
+  const notesEmptyEl = document.getElementById('notes-empty');
+  const statusBadge  = document.getElementById('status-badge');
+
+  let messages = [];
+  const notes  = {};
+
+  // Auto-resize textarea
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+  });
+
+  inputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  sendBtn.addEventListener('click', send);
+
+  function trigger(id) {
+    document.getElementById(id)?.classList.add('triggered');
+  }
+
+  function chip(text, cls = '') {
+    const el = document.createElement('div');
+    el.className = `event-chip ${cls}`.trim();
+    el.textContent = text;
+    messagesEl.appendChild(el);
+    scroll();
+  }
+
+  function scroll() {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function addMessage(role, text) {
+    const wrap = document.createElement('div');
+    wrap.className = `message ${role}`;
+    wrap.innerHTML = `<div class="message-label">${role}</div><div class="message-body"></div>`;
+    messagesEl.appendChild(wrap);
+    const body = wrap.querySelector('.message-body');
+    body.textContent = text;
+    scroll();
+    return body;
+  }
+
+  function renderNotes() {
+    if (Object.keys(notes).length === 0) return;
+    notesEmptyEl.style.display = 'none';
+    notesListEl.innerHTML = Object.entries(notes).map(([k, v]) =>
+      `<div class="note-card">
+        <div class="note-key">${k}</div>
+        <div class="note-value">${v}</div>
+      </div>`
+    ).join('') + '<span id="notes-empty" style="display:none"></span>';
+  }
+
+  function setStatus(text, live = false) {
+    statusBadge.textContent = text;
+    statusBadge.className = 'badge' + (live ? ' live' : '');
+  }
+
+  async function send() {
+    const text = inputEl.value.trim();
+    if (!text || sendBtn.disabled) return;
+
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    sendBtn.disabled = true;
+    setStatus('thinking…', true);
+
+    messages.push({ role: 'user', content: text });
+    addMessage('user', text);
+
+    // These principles are active on every request
+    trigger('p-prompt');
+    trigger('p-cache');
+    trigger('p-limits');
+
+    const bodyEl = addMessage('assistant', '');
+    let fullText = '';
+
+    suggestionEl.textContent = '…';
+    suggestionEl.classList.remove('empty');
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages })
+      });
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          let event;
+          try { event = JSON.parse(line.slice(6)); } catch { continue; }
+
+          if (event.type === 'text') {
+            fullText += event.text;
+            bodyEl.textContent = fullText;
+            scroll();
+          }
+
+          if (event.type === 'compressed') {
+            // Sync local history to the server's compressed version
+            messages = event.messages;
+            chip(`history compressed → ${messages.length} messages`, 'compressed');
+            trigger('p-compress');
+            trigger('p-model');
+          }
+
+          if (event.type === 'note_saved') {
+            notes[event.key] = event.value;
+            renderNotes();
+            chip(`note saved: ${event.key}`, 'note');
+            trigger('p-tool');
+          }
+
+          if (event.type === 'suggestion') {
+            suggestionEl.textContent = event.text;
+            suggestionEl.classList.remove('empty');
+            trigger('p-plan');
+            trigger('p-model');
+          }
+
+          if (event.type === 'done') {
+            messages.push({ role: 'assistant', content: fullText });
+            setStatus('ready');
+          }
+
+          if (event.type === 'error') {
+            bodyEl.textContent = `Error: ${event.message}`;
+            bodyEl.style.color = '#f85149';
+            setStatus('error');
+          }
+        }
+      }
+    } catch (err) {
+      bodyEl.textContent = `Network error: ${err.message}`;
+      bodyEl.style.color = '#f85149';
+      setStatus('error');
+    }
+
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+</script>
+</body>
+</html>
